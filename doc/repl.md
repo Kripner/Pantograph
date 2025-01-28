@@ -13,6 +13,8 @@ See `Pantograph/Protocol.lean` for a description of the parameters and return va
   only the values of definitions are printed.
 * `env.save { "path": <fileName> }`, `env.load { "path": <fileName> }`: Save/Load the
   current environment to/from a file
+* `env.module_read { "module": <name }`: Reads a list of symbols from a module
+* `env.describe {}`: Describes the imports and modules in the current environment
 * `options.set { key: value, ... }`: Set one or more options (not Lean options; those
   have to be set via command line arguments.), for options, see `Pantograph/Protocol.lean`
 
@@ -33,6 +35,7 @@ See `Pantograph/Protocol.lean` for a description of the parameters and return va
     to the previous `rhs`.
   - `{ "conv": <bool> }`: Enter or exit conversion tactic mode. In the case of
     exit, the goal id is ignored.
+  - `{ "draft": <expr> }`: Draft an expression with `sorry`s, turning them into goals. Coupling is not allowed.
 * `goal.continue {"stateId": <id>, ["branch": <id>], ["goals": <names>]}`:
   Execute continuation/resumption
   - `{ "branch": <id> }`: Continue on branch state. The current state must have no goals.
@@ -44,11 +47,12 @@ See `Pantograph/Protocol.lean` for a description of the parameters and return va
   state. The user is responsible to ensure the sender/receiver instances share
   the same environment.
 * `frontend.process { ["fileName": <fileName>,] ["file": <str>], invocations:
-  <bool>, sorrys: <bool>, newConstants: <bool> }`: Executes the Lean frontend on
-  a file, collecting the tactic invocations (`"invocations": true`), the
-  sorrys and type errors into goal states (`"sorrys": true`), and new constants
-  (`"newConstants": true`). In the case of `sorrys`, this command additionally
-  outputs the position of each captured `sorry`.
+  <bool>, sorrys: <bool>, typeErrorsAsGoals: <bool>, newConstants: <bool> }`:
+  Executes the Lean frontend on a file, collecting the tactic invocations
+  (`"invocations": true`), the sorrys and type errors into goal states
+  (`"sorrys": true`), and new constants (`"newConstants": true`). In the case of
+  `sorrys`, this command additionally outputs the position of each captured
+  `sorry`.
 
 ## Errors
 
