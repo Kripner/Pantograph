@@ -336,14 +336,39 @@ structure FrontendProcess where
   -- list new constants from each compilation step
   newConstants: Bool := false
   deriving Lean.FromJson
+
+/-- View of `MetavarDecl` -/
+structure MetavarDeclInfo where
+  userName       : String
+  type           : String
+  depth          : Nat
+  kind           : String
+  numScopeArgs   : Nat
+  index          : Nat
+  deriving Lean.ToJson
+
+/-- View of `MetavarContext`.  -/
+structure MctxInfo where
+  depth             : Nat
+  levelAssignDepth  : Nat
+  mvarCounter       : Nat
+  decls             : Array (String × MetavarDeclInfo)
+  userNames         : Array (String × String)
+  deriving Lean.ToJson
+
 structure InvokedTactic where
   goalBefore: String
+  goalBeforeIds: Array String
   goalAfter: String
+  goalAfterIds: Array String
   tactic: String
+  mctxBefore : MctxInfo
+  mctxAfter  : MctxInfo
 
   -- List of used constants
   usedConstants: Array String
   deriving Lean.ToJson
+
 
 structure CompilationUnit where
   -- String boundaries of compilation units

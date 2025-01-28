@@ -78,6 +78,38 @@ private def collectTacticNodes (t : Elab.InfoTree) : List TacticInvocation :=
 def collectTactics (t : Elab.InfoTree) : List TacticInvocation :=
   collectTacticNodes t |>.filter fun i => i.info.isSubstantive
 
+instance : ToString MetavarKind where
+  toString
+  | .synthetic       => "synthetic"
+  | .syntheticOpaque => "syntheticOpaque"
+  | .natural         => "natural"
+
+def mvarDeclToInfo (d : MetavarDecl) : Protocol.MetavarDeclInfo :=
+  { userName       := d.userName.toString
+    type           := d.type.dbgToString
+    depth          := d.depth
+    kind           := toString d.kind
+    numScopeArgs   := d.numScopeArgs
+    index          := d.index
+  }
+
+def gatherUserNames (userNames : PersistentHashMap Name MVarId) : List (String × String) :=
+  userNames.toArray.foldl (init := []) fun acc (pair : Name × MVarId) =>
+    let (nm, mvarId) := pair
+    (nm.toString, mvarId.name.toString) :: acc
+
+def gatherDecls (decls : PersistentHashMap MVarId MetavarDecl) : List (String × Protocol.MetavarDeclInfo) :=
+  decls.toArray.foldl (init := []) fun acc (pair : MVarId × MetavarDecl) =>
+    let (mvarId, d) := pair
+    (mvarId.name.toString, mvarDeclToInfo d) :: acc
+
+def toMctxInfo (mctx : MetavarContext) : Protocol.MctxInfo :=
+  { depth            := mctx.depth
+    levelAssignDepth := mctx.levelAssignDepth
+    mvarCounter      := mctx.mvarCounter
+    decls            := (gatherDecls mctx.decls).toArray
+    userNames        := (gatherUserNames mctx.userNames).toArray }
+
 @[export pantograph_frontend_collect_tactics_from_compilation_step_m]
 def collectTacticsFromCompilationStep (step : CompilationStep) : IO (List Protocol.InvokedTactic) := do
   let tacticInfoTrees := step.trees.bind λ tree => tree.filter λ
@@ -85,18 +117,26 @@ def collectTacticsFromCompilationStep (step : CompilationStep) : IO (List Protoc
     | _ => false
   let tactics := tacticInfoTrees.bind collectTactics
   tactics.mapM λ invocation => do
-    let goalBefore := (Format.joinSep (← invocation.goalState) "\n").pretty
-    let goalAfter := (Format.joinSep (← invocation.goalStateAfter) "\n").pretty
+    let goalBefore := (Format.joinSep (← invocation.goalState) "\n¬").pretty
+    let goalBeforeIds := (invocation.info.goalsBefore.map (·.name.toString)).toArray
+    let goalAfter := (Format.joinSep (← invocation.goalStateAfter) "\n¬").pretty
+    let goalAfterIds := (invocation.info.goalsAfter.map (·.name.toString)).toArray
     let tactic ← invocation.ctx.runMetaM {} <| Meta.withMCtx invocation.info.mctxBefore do
       return (← invocation.ctx.ppSyntax {} invocation.info.stx).pretty
       -- FIXME: Why does this not work? There are problems with `term.pseudo.antiquot`
       --PrettyPrinter.ppTactic ⟨invocation.info.stx⟩
       --return t.pretty
     let usedConstants := invocation.usedConstants.toArray.map λ n => n.toString
+    let mctxBefore := toMctxInfo invocation.info.mctxBefore
+    let mctxAfter  := toMctxInfo invocation.info.mctxAfter
     return {
       goalBefore,
+      goalBeforeIds,
       goalAfter,
+      goalAfterIds,
       tactic,
+      mctxBefore,
+      mctxAfter,
       usedConstants,
     }
 
