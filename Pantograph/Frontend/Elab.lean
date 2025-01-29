@@ -117,9 +117,9 @@ def collectTacticsFromCompilationStep (step : CompilationStep) : IO (List Protoc
     | _ => false
   let tactics := tacticInfoTrees.flatMap collectTactics
   tactics.mapM λ invocation => do
-    let goalBefore := (Format.joinSep (← invocation.goalState) "\n¬").pretty
+    let goalBefore := (Format.joinSep (← invocation.goalState) "\n\n").pretty
     let goalBeforeIds := (invocation.info.goalsBefore.map (·.name.toString)).toArray
-    let goalAfter := (Format.joinSep (← invocation.goalStateAfter) "\n¬").pretty
+    let goalAfter := (Format.joinSep (← invocation.goalStateAfter) "\n\n").pretty
     let goalAfterIds := (invocation.info.goalsAfter.map (·.name.toString)).toArray
     let tactic ← invocation.ctx.runMetaM {} <| Meta.withMCtx invocation.info.mctxBefore do
       return (← invocation.ctx.ppSyntax {} invocation.info.stx).pretty
