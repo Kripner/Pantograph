@@ -276,16 +276,14 @@ def execute (command: Protocol.Command): MainM Lean.Json := do
             Frontend.collectSorrys step (options := { collectTypeErrors := args.typeErrorsAsGoals })
           else
             pure []
-        let trees ← if args.trees then
-            -- step.trees.mapM fun tree => do
-            --   let proofTrees ← liftIO (PaperProof.BetterParser tree)
-            --   pure <| some proofTrees
-            let parsedTree? ← PaperProof.BetterParser step.trees[0]!
-            match parsedTree? with
-            | none => pure []
-            | some parsedTree => pure parsedTree.steps
+        let trees ← if args.proof_trees then
+            step.trees.mapM fun tree => do
+              let parsedTree? ← PaperProof.BetterParser tree
+              match parsedTree? with
+              | none => pure []
+              | some parsedTree => pure parsedTree.steps
           else
-            pure []
+            pure [[]]
 
         let messages ← step.messageStrings
         let newConstants ← if args.newConstants then
@@ -315,7 +313,7 @@ def execute (command: Protocol.Command): MainM Lean.Json := do
           goals?,
           goalSrcBoundaries?,
           newConstants?,
-          x := trees,
+          proof_tree_edges := trees,
         }
       return .ok { units }
     catch e =>

@@ -355,7 +355,7 @@ structure FrontendProcess where
   typeErrorsAsGoals: Bool := false
   -- list new constants from each compilation step
   newConstants: Bool := false
-  trees: Bool := false
+  proof_trees: Bool := false
   deriving Lean.FromJson
 
 /-- View of `MetavarDecl` -/
@@ -405,8 +405,7 @@ structure CompilationUnit where
   -- New constants defined in compilation unit
   newConstants?: Option (Array String) := .none
   -- Proof trees
-  -- trees?: Option (Array String) := .none
-  x: List PaperProof.ProofStep := []
+  proof_tree_edges: List (List PaperProof.ProofStep) := []
   deriving Lean.ToJson
 structure FrontendProcessResult where
   units: List CompilationUnit
