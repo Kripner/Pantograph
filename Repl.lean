@@ -1,5 +1,6 @@
 import Std.Data.HashMap
 import Pantograph
+import Pantograph.PaperProof.BetterParser
 
 namespace Pantograph.Repl
 
@@ -275,14 +276,25 @@ def execute (command: Protocol.Command): MainM Lean.Json := do
             Frontend.collectSorrys step (options := { collectTypeErrors := args.typeErrorsAsGoals })
           else
             pure []
+        let trees ← if args.trees then
+            -- step.trees.mapM fun tree => do
+            --   let proofTrees ← liftIO (PaperProof.BetterParser tree)
+            --   pure <| some proofTrees
+            let parsedTree? ← PaperProof.BetterParser step.trees[0]!
+            match parsedTree? with
+            | none => pure []
+            | some parsedTree => pure parsedTree.steps
+          else
+            pure []
+
         let messages ← step.messageStrings
         let newConstants ← if args.newConstants then
             Frontend.collectNewDefinedConstants step
           else
             pure []
-        return (step.before, boundary, invocations?, sorrys, messages, newConstants)
+        return (step.before, boundary, invocations?, sorrys, messages, newConstants, trees)
       let li ← frontendM.run context |>.run' state
-      let units ← li.mapM λ (env, boundary, invocations?, sorrys, messages, newConstants) => Lean.withEnv env do
+      let units ← li.mapM λ (env, boundary, invocations?, sorrys, messages, newConstants, trees) => Lean.withEnv env do
         let newConstants? := if args.newConstants then
             .some $ newConstants.toArray.map λ name => name.toString
           else
@@ -303,6 +315,7 @@ def execute (command: Protocol.Command): MainM Lean.Json := do
           goals?,
           goalSrcBoundaries?,
           newConstants?,
+          x := trees,
         }
       return .ok { units }
     catch e =>
