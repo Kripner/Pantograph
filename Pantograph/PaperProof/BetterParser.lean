@@ -167,6 +167,8 @@ def getGoalsChange (ctx : ContextInfo) (tInfo : TacticInfo) : IO (List (List Str
       ) :: result
   return result
 
+-- TODO: solve rwa, rw_mod_cast
+
 def prettifySteps (stx : Syntax) (steps : List ProofStep) : List ProofStep := Id.run do
   match stx with
   | `(tactic| rw [$_,*] $(_)?)

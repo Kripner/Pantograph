@@ -127,8 +127,11 @@ def collectTacticsFromCompilationStep (step : CompilationStep) : IO (List Protoc
       --PrettyPrinter.ppTactic ⟨invocation.info.stx⟩
       --return t.pretty
     let usedConstants := invocation.usedConstants.toArray.map λ n => n.toString
-    let mctxBefore := toMctxInfo invocation.info.mctxBefore
-    let mctxAfter  := toMctxInfo invocation.info.mctxAfter
+    -- let mctxBefore := toMctxInfo invocation.info.mctxBefore
+    -- let mctxAfter  := toMctxInfo invocation.info.mctxAfter
+    let mctxBefore := none
+    let mctxAfter := none
+
     return {
       goalBefore,
       goalBeforeIds,

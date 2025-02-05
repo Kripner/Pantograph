@@ -383,8 +383,8 @@ structure InvokedTactic where
   goalAfter: String
   goalAfterIds: Array String
   tactic: String
-  mctxBefore : MctxInfo
-  mctxAfter  : MctxInfo
+  mctxBefore : Option MctxInfo
+  mctxAfter  : Option MctxInfo
 
   -- List of used constants
   usedConstants: Array String

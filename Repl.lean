@@ -284,6 +284,7 @@ def execute (command: Protocol.Command): MainM Lean.Json := do
               | some parsedTree => pure parsedTree.steps
           else
             pure [[]]
+        -- let trees := [[]]
 
         let messages ← step.messageStrings
         let newConstants ← if args.newConstants then
