@@ -22,6 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 -/
 
+/-
+Modified.
+-/
+
 import Lean
 import Lean.Meta.Basic
 import Lean.Meta.CollectMVars
@@ -170,14 +174,19 @@ def getGoalsChange (ctx : ContextInfo) (tInfo : TacticInfo) : IO (List (List Str
 -- TODO: solve rwa, rw_mod_cast
 
 def prettifySteps (stx : Syntax) (steps : List ProofStep) : List ProofStep := Id.run do
+  let prettify (tStr : String) :=
+    let res := tStr.trim.dropRightWhile (· == ',')
+    -- rw puts final rfl on the "]" token
+    if res == "]" then "rfl" else res
   match stx with
   | `(tactic| rw [$_,*] $(_)?)
   | `(tactic| rewrite [$_,*] $(_)?) =>
-    let prettify (tStr : String) :=
-      let res := tStr.trim.dropRightWhile (· == ',')
-      -- rw puts final rfl on the "]" token
-      if res == "]" then "rfl" else res
     return steps.map fun a => { a with tacticString := s!"rw [{prettify a.tacticString}]" }
+  | `(tactic| rwa [$_,*] $(_)?) =>
+    let rwSteps := steps.map fun a => { a with tacticString := s!"rw [{prettify a.tacticString}]" }
+    let assumptionSteps := (if rwSteps.isEmpty then [] else rwSteps.getLast!.goalsAfter).map fun g =>
+      { tacticString := "assumption", goalBefore := g, goalsAfter := [], tacticDependsOn := [], spawnedGoals := [] }
+    return rwSteps ++ assumptionSteps
   | _ => return steps
 
 -- Comparator for names, e.g. so that _uniq.34 and _uniq.102 go in the right order.
